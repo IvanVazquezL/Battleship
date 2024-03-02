@@ -3,9 +3,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Battleships {
-    private ArrayList<ArrayList<String>> board = new ArrayList<>();
+    private ArrayList<ArrayList<String>> shipsBoard = new ArrayList<>();
+    private ArrayList<ArrayList<String>> gameBoard = new ArrayList<>();
     private Scanner scanner = new Scanner(System.in);
     private ArrayList<Battleship> battleships;
     private Battleship currentBattleship;
@@ -17,9 +19,10 @@ public class Battleships {
 
     Battleships() {
         initializeBoard();
-        displayBoard();
+        displayBoard(shipsBoard);
         populateBattleships();
         populateLetterToIndex();
+        placeShipsOnBoard();
     }
 
     private void populateLetterToIndex() {
@@ -51,7 +54,7 @@ public class Battleships {
         ));
     }
 
-    public void startGame() {
+    public void placeShipsOnBoard() {
         for (Battleship battleship : battleships) {
             currentBattleship = battleship;
             char firstCoordinateLetter;
@@ -92,7 +95,7 @@ public class Battleships {
 
                     int incrementer = firstCoordinateNumber > secondCoordinateNumber ? -1 : 1;
                     int rowIndex = letterToIndex.get(firstCoordinateLetter);
-                    ArrayList<String> row = board.get(rowIndex);
+                    ArrayList<String> row = shipsBoard.get(rowIndex);
                     int cell = firstCoordinateNumber;
 
                     for (int i = 0; i < length; i++) {
@@ -137,7 +140,7 @@ public class Battleships {
 
                     for (int i = 0; i < length; i++) {
                         int rowIndex = letterToIndex.get((char) currentValue);
-                        ArrayList<String> row = board.get(rowIndex);
+                        ArrayList<String> row = shipsBoard.get(rowIndex);
 
                         if (
                                 hasShipCellAbove(rowIndex, firstCoordinateNumber) ||
@@ -160,23 +163,21 @@ public class Battleships {
 
                     for (int i = 0; i < length; i++) {
                         int rowIndex = letterToIndex.get((char) currentValue);
-                        ArrayList<String> row = board.get(rowIndex);
+                        ArrayList<String> row = shipsBoard.get(rowIndex);
                         row.set(firstCoordinateNumber, ship);
                         currentValue += incrementor;
                     }
                 }
 
-                displayBoard();
+                displayBoard(shipsBoard);
                 break;
             } while(true);
         }
-
-        shoot();
     }
 
-    private void shoot() {
+    public void startGame() {
         System.out.println("The game starts!");
-        displayBoard();
+        displayBoard(gameBoard);
 
         System.out.println("Take a shot!");
 
@@ -194,17 +195,21 @@ public class Battleships {
             }
 
             int rowIndex = letterToIndex.get(coordinateLetter);
-            String value = board.get(rowIndex).get(coordinateNumber);
+            String value = shipsBoard.get(rowIndex).get(coordinateNumber);
 
             if (value.equals(ship)) {
-                board.get(rowIndex).set(coordinateNumber, hit);
-                displayBoard();
+                shipsBoard.get(rowIndex).set(coordinateNumber, hit);
+                gameBoard.get(rowIndex).set(coordinateNumber, hit);
+                displayBoard(gameBoard);
                 System.out.println("You hit a ship!");
             } else if (value.equals(mist)) {
-                board.get(rowIndex).set(coordinateNumber, miss);
-                displayBoard();
+                shipsBoard.get(rowIndex).set(coordinateNumber, miss);
+                gameBoard.get(rowIndex).set(coordinateNumber, miss);
+                displayBoard(gameBoard);
                 System.out.println("You missed!");
             }
+
+            displayBoard(shipsBoard);
 
             break;
         } while(true);
@@ -230,7 +235,7 @@ public class Battleships {
     private boolean hasShip(int rowIndex, int cell) {
         try {
             // Access an element at an index that may cause IndexOutOfBoundsException
-            String value = board.get(rowIndex).get(cell + 1);
+            String value = shipsBoard.get(rowIndex).get(cell + 1);
             return value.equals(ship);
         } catch (IndexOutOfBoundsException e) {
             return false;
@@ -263,20 +268,24 @@ public class Battleships {
     }
 
     private void initializeBoard() {
-        board.add(new ArrayList<>(Arrays.asList(" ","1","2","3","4","5","6","7","8","9","10")));
-        board.add(new ArrayList<>(Arrays.asList("A","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("B","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("C","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("D","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("E","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("F","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("G","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("H","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("I","~","~","~","~","~","~","~","~","~","~")));
-        board.add(new ArrayList<>(Arrays.asList("J","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList(" ","1","2","3","4","5","6","7","8","9","10")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("A","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("B","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("C","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("D","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("E","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("F","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("G","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("H","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("I","~","~","~","~","~","~","~","~","~","~")));
+        shipsBoard.add(new ArrayList<>(Arrays.asList("J","~","~","~","~","~","~","~","~","~","~")));
+
+        gameBoard = new ArrayList<>(shipsBoard.stream()
+                .map(ArrayList::new)
+                .collect(Collectors.toList()));
     }
 
-    private void displayBoard() {
+    private void displayBoard(ArrayList<ArrayList<String>> board) {
         for(ArrayList<String> row : board) {
             System.out.println(String.join(" ", row));
         }
