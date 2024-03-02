@@ -1,76 +1,201 @@
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Battleships {
     private ArrayList<ArrayList<String>> board = new ArrayList<>();
     private Scanner scanner = new Scanner(System.in);
+    private ArrayList<Battleship> battleships;
+    private Battleship currentBattleship;
+    private HashMap<Character, Integer> letterToIndex = new HashMap<>();
+    private String ship = "O";
+    private String hit = "X";
+    private String miss = "M";
+    private String mist = "~";
+
     Battleships() {
         initializeBoard();
         displayBoard();
-        startGame();
+        populateBattleships();
+        populateLetterToIndex();
     }
 
-    private void startGame() {
-        System.out.println("Enter the coordinates of the ship:");
-        String coordinatesLine = scanner.nextLine();
+    private void populateLetterToIndex() {
+        letterToIndex.put('A', 1);
+        letterToIndex.put('B', 2);
+        letterToIndex.put('C', 3);
+        letterToIndex.put('D', 4);
+        letterToIndex.put('E', 5);
+        letterToIndex.put('F', 6);
+        letterToIndex.put('G', 7);
+        letterToIndex.put('H', 8);
+        letterToIndex.put('I', 9);
+        letterToIndex.put('J', 10);
+    }
 
-        ArrayList<String> coordinates =  new ArrayList<>(Arrays.asList(coordinatesLine.split(" ")));
-        char firstCoordinateLetter = coordinates.get(0).charAt(0);
-        int firstCoordinateNumber = Integer.parseInt(coordinates.get(0).substring(1, coordinates.get(0).length()));
+    private void populateBattleships() {
+        Battleship aircraftCarrier = new Battleship("Aircraft Carrier", 5);
+        Battleship battleship = new Battleship("Battleship", 4);
+        Battleship submarine = new Battleship("Submarine", 3);
+        Battleship cruiser = new Battleship("Cruiser", 3);
+        Battleship destroyer = new Battleship("Destroyer", 2);
 
-        char secondCoordinateLetter = coordinates.get(1).charAt(0);
-        int secondCoordinateNumber = Integer.parseInt(coordinates.get(1).substring(1, coordinates.get(1).length()));
+        battleships = new ArrayList<>(Arrays.asList(
+                aircraftCarrier,
+                battleship,
+                submarine,
+                cruiser,
+                destroyer
+        ));
+    }
 
-        if (!areValidCoordinates(firstCoordinateLetter, firstCoordinateNumber, secondCoordinateLetter, secondCoordinateNumber)) {
-            System.out.println("Error!");
-            return;
-        }
+    public void startGame() {
+        for (Battleship battleship : battleships) {
+            currentBattleship = battleship;
+            char firstCoordinateLetter;
+            int firstCoordinateNumber;
+            char secondCoordinateLetter;
+            int secondCoordinateNumber;
+            System.out.printf("Enter the coordinates of the %s (%d cells):\n", currentBattleship.getName(), currentBattleship.getLength());
 
-        if (firstCoordinateLetter == secondCoordinateLetter) {
-            int length = Math.abs(firstCoordinateNumber - secondCoordinateNumber) + 1;
-            System.out.printf("Length: %d\n", length);
-            StringBuilder stringBuilder = new StringBuilder();
+            inputLoop:
+            do {
+                String coordinatesLine = scanner.nextLine();
+                ArrayList<String> coordinates =  new ArrayList<>(Arrays.asList(coordinatesLine.split(" ")));
 
-            int incrementor = firstCoordinateNumber > secondCoordinateNumber ? -1 : 1;
-            int currentValue = firstCoordinateNumber;
+                String firstCoordinate = coordinates.get(0);
+                int firstCoordinateLength = coordinates.get(0).length();
+                firstCoordinateLetter = firstCoordinate.charAt(0);
+                String firstCoordinateNumberString = firstCoordinate.substring(1, firstCoordinateLength);
+                firstCoordinateNumber = Integer.parseInt(firstCoordinateNumberString);
 
-            for (int i = 0; i < length; i++) {
-                stringBuilder.append(firstCoordinateLetter).append(currentValue);
-                if (i < length) {
-                    stringBuilder.append(" ");
+                String secondCoordinate = coordinates.get(1);
+                int secondCoordinateLength = coordinates.get(1).length();
+                secondCoordinateLetter = secondCoordinate.charAt(0);
+                String secondCoordinateNumberString = secondCoordinate.substring(1, secondCoordinateLength);
+                secondCoordinateNumber = Integer.parseInt(secondCoordinateNumberString);
+
+                if (!areValidCoordinates(firstCoordinateLetter, firstCoordinateNumber, secondCoordinateLetter, secondCoordinateNumber)) {
+                    System.out.println("Error! Wrong ship location! Try again:");
+                    continue;
                 }
-                currentValue += incrementor;
-            }
 
-            System.out.printf("Parts: %s", stringBuilder);
-        } else {
-            int asciiCodeFirstLetter = (int) firstCoordinateLetter;
-            int asciiCodeSecondLetter = (int) secondCoordinateLetter;
+                if (firstCoordinateLetter == secondCoordinateLetter) {
+                    int length = Math.abs(firstCoordinateNumber - secondCoordinateNumber) + 1;
 
-            int length = Math.abs(asciiCodeFirstLetter - asciiCodeSecondLetter) + 1;
-            System.out.printf("Length: %d\n", length);
-            StringBuilder stringBuilder = new StringBuilder();
+                    if (length != currentBattleship.getLength()) {
+                        System.out.println("Error! Wrong length of the Submarine! Try again:");
+                        continue;
+                    }
 
-            int incrementor = asciiCodeFirstLetter > asciiCodeSecondLetter ? -1 : 1;
-            int currentValue = asciiCodeFirstLetter;
+                    int incrementer = firstCoordinateNumber > secondCoordinateNumber ? -1 : 1;
+                    int rowIndex = letterToIndex.get(firstCoordinateLetter);
+                    ArrayList<String> row = board.get(rowIndex);
+                    int cell = firstCoordinateNumber;
 
-            for (int i = 0; i < length; i++) {
-                char character = (char) currentValue;
-                stringBuilder.append(character).append(firstCoordinateNumber);
-                if (i < length) {
-                    stringBuilder.append(" ");
+                    for (int i = 0; i < length; i++) {
+
+                        if (
+                                hasShipCellAbove(rowIndex, cell) ||
+                                        hasShipNextCell(rowIndex, cell) ||
+                                        hasShipPreviousCell(rowIndex, cell) ||
+                                        hasShipCellUnder(rowIndex, cell)
+                        ) {
+                            System.out.println("Error! You placed it too close to another one. Try again:");
+                            continue inputLoop;
+                        }
+
+                        if (row.get(cell).equals(ship)) {
+                            System.out.println("Error! You placed it too close to another one. Try again:");
+                            continue inputLoop;
+                        }
+                        cell += incrementer;
+                    }
+
+                    cell = firstCoordinateNumber;
+
+                    for (int i = 0; i < length; i++) {
+                        row.set(cell, ship);
+                        cell += incrementer;
+                    }
+
+                } else {
+                    int asciiCodeFirstLetter = (int) firstCoordinateLetter;
+                    int asciiCodeSecondLetter = (int) secondCoordinateLetter;
+
+                    int length = Math.abs(asciiCodeFirstLetter - asciiCodeSecondLetter) + 1;
+
+                    if (length != currentBattleship.getLength()) {
+                        System.out.println("Error! Wrong length of the Submarine! Try again:");
+                        continue;
+                    }
+
+                    int incrementor = asciiCodeFirstLetter > asciiCodeSecondLetter ? -1 : 1;
+                    int currentValue = asciiCodeFirstLetter;
+
+                    for (int i = 0; i < length; i++) {
+                        int rowIndex = letterToIndex.get((char) currentValue);
+                        ArrayList<String> row = board.get(rowIndex);
+
+                        if (
+                                hasShipCellAbove(rowIndex, firstCoordinateNumber) ||
+                                        hasShipNextCell(rowIndex, firstCoordinateNumber) ||
+                                        hasShipPreviousCell(rowIndex, firstCoordinateNumber) ||
+                                        hasShipCellUnder(rowIndex, firstCoordinateNumber)
+                        ) {
+                            System.out.println("Error! You placed it too close to another one. Try again:");
+                            continue inputLoop;
+                        }
+
+                        if (row.get(firstCoordinateNumber).equals(ship)) {
+                            System.out.println("Error! You placed it too close to another one. Try again:");
+                            continue inputLoop;
+                        }
+                        currentValue += incrementor;
+                    }
+
+                    currentValue = asciiCodeFirstLetter;
+
+                    for (int i = 0; i < length; i++) {
+                        int rowIndex = letterToIndex.get((char) currentValue);
+                        ArrayList<String> row = board.get(rowIndex);
+                        row.set(firstCoordinateNumber, ship);
+                        currentValue += incrementor;
+                    }
                 }
-                currentValue += incrementor;
-            }
 
-            System.out.printf("Parts: %s", stringBuilder);
-
-
+                displayBoard();
+                break;
+            } while(true);
         }
+    }
 
+    private boolean hasShipCellAbove(int rowIndex, int cell) {
+        return hasShip(rowIndex - 1, cell);
+    }
 
+    private boolean hasShipCellUnder(int rowIndex, int cell) {
+        return hasShip(rowIndex + 1, cell);
+    }
+
+    private boolean hasShipPreviousCell(int rowIndex, int cell) {
+        return hasShip(rowIndex, cell - 1);
+    }
+
+    private boolean hasShipNextCell(int rowIndex, int cell) {
+        return hasShip(rowIndex, cell + 1);
+    }
+
+    private boolean hasShip(int rowIndex, int cell) {
+        try {
+            // Access an element at an index that may cause IndexOutOfBoundsException
+            String value = board.get(rowIndex).get(cell + 1);
+            return value.equals(ship);
+        } catch (IndexOutOfBoundsException e) {
+            return false;
+        }
     }
 
     private boolean areValidCoordinates(char firstCoordinateLetter, int firstCoordinateNumber, char secondCoordinateLetter, int secondCoordinateNumber) {
