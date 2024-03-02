@@ -170,6 +170,45 @@ public class Battleships {
                 break;
             } while(true);
         }
+
+        shoot();
+    }
+
+    private void shoot() {
+        System.out.println("The game starts!");
+        displayBoard();
+
+        System.out.println("Take a shot!");
+
+        do {
+            String coordinate = scanner.nextLine();
+
+            int coordinateLength = coordinate.length();
+            char coordinateLetter = coordinate.charAt(0);
+            String coordinateNumberString = coordinate.substring(1, coordinateLength);
+            int coordinateNumber = Integer.parseInt(coordinateNumberString);
+
+            if (!isAValidCoordinate(coordinateLetter, coordinateNumber)) {
+                System.out.println("Error! You entered the wrong coordinates! Try again:");
+                continue;
+            }
+
+            int rowIndex = letterToIndex.get(coordinateLetter);
+            String value = board.get(rowIndex).get(coordinateNumber);
+
+            if (value.equals(ship)) {
+                board.get(rowIndex).set(coordinateNumber, hit);
+                displayBoard();
+                System.out.println("You hit a ship!");
+            } else if (value.equals(mist)) {
+                board.get(rowIndex).set(coordinateNumber, miss);
+                displayBoard();
+                System.out.println("You missed!");
+            }
+
+            break;
+        } while(true);
+
     }
 
     private boolean hasShipCellAbove(int rowIndex, int cell) {
@@ -199,17 +238,9 @@ public class Battleships {
     }
 
     private boolean areValidCoordinates(char firstCoordinateLetter, int firstCoordinateNumber, char secondCoordinateLetter, int secondCoordinateNumber) {
-        int asciiCodeFirstLetter = (int) firstCoordinateLetter;
-        int asciiCodeSecondLetter = (int) secondCoordinateLetter;
 
-        if (!(asciiCodeFirstLetter >= 65 && asciiCodeFirstLetter <= 74 &&
-                asciiCodeSecondLetter >= 65 && asciiCodeSecondLetter <= 74)
-        ) {
-            return false;
-        }
-
-        if (!(firstCoordinateNumber >= 1 && firstCoordinateNumber <= 10 &&
-                secondCoordinateNumber >= 1 && secondCoordinateNumber <= 10)) {
+        if (!isAValidCoordinate(firstCoordinateLetter, firstCoordinateNumber) &&
+                !isAValidCoordinate(secondCoordinateLetter, secondCoordinateNumber)) {
             return false;
         }
 
@@ -222,6 +253,13 @@ public class Battleships {
 
         //The ship must be on the same column to be valid
         return firstCoordinateNumber == secondCoordinateNumber;
+    }
+
+    private boolean isAValidCoordinate(char coordinateLetter, int coordinateNumber) {
+        int asciiCodeLetter = (int) coordinateLetter;
+
+        return (asciiCodeLetter >= 65 && asciiCodeLetter <= 74) &&
+                (coordinateNumber >= 1 && coordinateNumber <= 10);
     }
 
     private void initializeBoard() {
