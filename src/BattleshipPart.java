@@ -1,3 +1,4 @@
+
 public class BattleshipPart extends Cell{
     private Battleship parentShip;
     private boolean isAlive;
